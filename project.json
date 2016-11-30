@@ -1,0 +1,20 @@
+{
+    "project_type": "javascript",
+
+    "debugMode" : 1,
+    "showFPS" : false,
+    "frameRate" : 60,
+    "noCache" : false,
+    "id" : "gameCanvas",
+    "renderMode" : 0,
+
+    "modules" : ["cocos2d"],
+
+    "jsList" : [
+        "src/resource.js",
+        "src/Board.js",
+		"src/GameScene.js",
+        "src/GameLayer.js",
+        "src/BackgroundLayer.js"
+	]
+}
