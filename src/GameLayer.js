@@ -39,12 +39,22 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
     // The board must be in the center of the screen and measure 300x200 design
     // pixels.
     //
-    // The stars must not overflow from the board.
+    // The stars must not overflow from the board. You must show somehow the
+    // bounds of the board to make this more visually obvious.
     //
-    // You must show somehow the bounds of the board.
+    // The stars must rotate endlessly, all at the same speed, but each starting
+    // with different, random angle.
     //
-    // When a star is clicked, onStarClicked() must be executed (see below).
+    // Each star must posses a random fill color among a set of four colors you
+    // choose.
     //
+    // Each star must have a outline of a slightly darker color than its fill
+    // color.
+    //
+    // When a star is clicked, onStarClicked() on this same file must be
+    // executed (see below).
+    //
+    // In the background the track `Fretless.m4a` must be played in loop.
 
 
     // This ensures sprites and labels are not blurry in desktop screens (see
@@ -53,17 +63,20 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
   },
 
   onStarClicked: function (star) {
-      // Make the star a bit bigger and then smaller until it disappears.
-      //
-      // After the star has disappeared a new one must emerge with an animation
-      // in a random position, without overlapping any other stars nor the
-      // position of the star that just disappeared.
-      //
-      // Time must start running if not running yet when this function is called.
+    // Make the star a bit bigger and then smaller until it disappears.
+    //
+    // After the star has disappeared a new one must emerge with an animation
+    // in a random position, without overlapping any other stars nor the
+    // position of the star that just disappeared.
+    //
+    // Time must start running if not running yet when this function is called.
+    //
+    // `sfxCorrect.m4a` must be played.
   },
 
   onTimeUp: function () {
-    // This method sends the score to the server when running in production and shows the score screen.
+    // This method sends the score to the server when running in production and
+    // shows the score screen.
     this.scene.finishGame({
       score: this.score,
       newStartingLevel: 1,
