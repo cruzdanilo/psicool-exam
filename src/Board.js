@@ -1,14 +1,20 @@
 /**
  * @class
- * @extends {cc.Node}
+ * @extends {cc.DrawNode}
  */
-var Board = cc.Node.extend(/** @lends Board# */{
+var Board = cc.DrawNode.extend(/** @lends Board# */{
   /**
    * @constructs
+   * @param {cc.Rect} rect
+   * @param {cc.Color} color
    */
-  ctor: function () {
+  ctor: function (rect, color) {
     this._super();
+    Object.assign(this, rect);
+    this.setColor(color);
     this.setCascadeOpacityEnabled(true);
+    this.drawRect(cc.p(0, 0), cc.p(this.width, this.height),
+                  cc.color(0, 0, 0, 0), 2, this.color);
   },
 
   onEnter: function () {

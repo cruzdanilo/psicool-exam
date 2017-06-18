@@ -29,7 +29,11 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
 
     // Here is just usual game code... Board is a custom node with the game
     // figures, for instance.
-    this.board = new Board();
+    let size = cc.size(300, 200),
+        rect = cc.rect(Math.round((cc.winSize.width - size.width) / 2),
+                       Math.round((cc.winSize.height - size.height) / 2),
+                       size.width, size.height);
+    this.board = new Board(rect, cc.color(255, 0, 0));
     this.addChild(this.board);
 
 
