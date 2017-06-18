@@ -2,6 +2,7 @@ var res = {
   atlasPlist: "res/atlas_x2.plist",
   atlasTexture: "res/atlas_x2.png",
   bgRepeat: "res/bgRepeat_x2.png",
+  bgm: "res/Fretless.m4a",
 };
 
 var g_resources = [];
