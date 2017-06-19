@@ -61,9 +61,9 @@
             <key>realTextureFileName</key>
             <string>atlas_x2.png</string>
             <key>size</key>
-            <string>{244,325}</string>
+            <string>{256,512}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:a61f460e3dacb39162d47b8942bc07c1:8bca5895210b70508b9e7005d02235a1:650a57d8ed495652ad0327fe4d567d8e$</string>
+            <string>$TexturePacker:SmartUpdate:65a4083b498f6741fa616d980294c581:8bca5895210b70508b9e7005d02235a1:650a57d8ed495652ad0327fe4d567d8e$</string>
             <key>textureFileName</key>
             <string>atlas_x2.png</string>
         </dict>

@@ -23,6 +23,11 @@ var GameScene = psicool.Scene.extend(/** @lends GameScene# */{
 
     // Load atlas textures
     cc.spriteFrameCache.addSpriteFrames(res.atlasPlist, res.atlasTexture);
+
+    // Enable mipmaps and use them in the minification filter
+    let texture = cc.textureCache.getTextureForKey(res.atlasTexture);
+    texture.generateMipmap(); // create the mipmap
+    texture.setAntiAliasTexParameters(); // use it in the minification filter
   },
 
   /**
@@ -47,7 +52,7 @@ var GameScene = psicool.Scene.extend(/** @lends GameScene# */{
       return this.layerGame.clock.getRemainingTimeInteger();
     }.bind(this));
   },
-  
+
   startTutorial: function () {
     // Reset game layer
     this.setLayerGame(new GameLayer(this, 1));
