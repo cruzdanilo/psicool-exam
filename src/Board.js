@@ -9,8 +9,9 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * @param {cc.Color} color
    * @param {number} figureCount
    * @param {cc.Node} Figure
+   * @param {function} [onFigureClicked]
    */
-  ctor: function (rect, color, figureCount, Figure) {
+  ctor: function (rect, color, figureCount, Figure, onFigureClicked) {
     this._super();
     Object.assign(this, rect);
     this.setColor(color);
@@ -24,6 +25,21 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
       this.addChild(figure);
     }
+    cc.eventManager.addListener({
+      event: cc.EventListener.TOUCH_ONE_BY_ONE,
+      swallowTouches: true,
+      onTouchBegan: (touch, event) => {
+        let pos = this.convertTouchToNodeSpace(touch);
+        if (!cc.rectContainsPoint(cc.rect(0, 0, this.width, this.height), pos))
+          return false;
+        let sqrRadius = Board.CLICK_RADIUS * Board.CLICK_RADIUS;
+        for (let figure of this.getChildren()) {
+          if (cc.pDistanceSQ(pos, figure.getPosition()) < sqrRadius)
+            return this.onFigureClicked(figure) || true;
+        }
+      }
+    }, this);
+    this.onFigureClickedCallback = onFigureClicked;
   },
 
   /**
@@ -118,6 +134,8 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * @param {Figure} figure
    */
   onFigureClicked: function (figure) {
+    if (this.onFigureClickedCallback)
+      this.onFigureClickedCallback(figure);
   },
 });
 

@@ -33,7 +33,8 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
         rect = cc.rect(Math.round((cc.winSize.width - size.width) / 2),
                        Math.round((cc.winSize.height - size.height) / 2),
                        size.width, size.height);
-    this.board = new Board(rect, cc.color(255, 0, 0), 15, Star);
+    this.board = new Board(rect, cc.color(255, 0, 0), 15, Star,
+                           this.onStarClicked.bind(this));
     this.addChild(this.board);
 
 
@@ -76,6 +77,9 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
     // Time must start running if not running yet when this function is called.
     //
     // `sfxCorrect.m4a` must be played.
+    if (!this.clock.isRunning())
+      this.clock.start();
+    cc.audioEngine.playEffect(res.sfxCorrect);
   },
 
   onTimeUp: function () {
