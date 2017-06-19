@@ -33,7 +33,7 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
         rect = cc.rect(Math.round((cc.winSize.width - size.width) / 2),
                        Math.round((cc.winSize.height - size.height) / 2),
                        size.width, size.height);
-    this.board = new Board(rect, cc.color(255, 0, 0));
+    this.board = new Board(rect, cc.color(255, 0, 0), 15, Star);
     this.addChild(this.board);
 
 
@@ -85,6 +85,6 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
       score: this.score,
       newStartingLevel: 1,
       additionalScoreRows: []
-    })
+    });
   },
 });

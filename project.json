@@ -13,7 +13,8 @@
     "jsList" : [
         "src/resource.js",
         "src/Board.js",
-		"src/GameScene.js",
+        "src/Star.js",
+		    "src/GameScene.js",
         "src/GameLayer.js",
         "src/BackgroundLayer.js"
 	]
