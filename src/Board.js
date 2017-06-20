@@ -176,6 +176,11 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * @param {Figure} figure
    */
   onFigureClicked: function (figure) {
+    figure.retain();
+    figure.removeFromParent(false); // Prevent multiple clicks
+    figure.setPosition(this.convertToWorldSpace(figure.getPosition()));
+    this.getParent().addChild(figure);
+    figure.release();
     if (this.onFigureClickedCallback)
       this.onFigureClickedCallback(figure);
   },
