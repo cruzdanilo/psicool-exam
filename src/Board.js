@@ -5,25 +5,25 @@
 var Board = cc.DrawNode.extend(/** @lends Board# */{
   /**
    * @constructs
-   * @param {cc.Rect} rect
-   * @param {cc.Color} color
-   * @param {number} figureCount
-   * @param {cc.Node} Figure
-   * @param {function} [onFigureClicked]
+   * @param {cc.Rect} rect - Board bounding box
+   * @param {cc.Color} color - Board color
+   * @param {number} figureCount - Number of figures
+   * @param {function} FigureClass - Figure class
+   * @param {function} [onFigureClicked] - Figure clicked callback
    */
-  ctor: function (rect, color, figureCount, Figure, onFigureClicked) {
+  ctor: function (rect, color, figureCount, FigureClass, onFigureClicked) {
     this._super();
     Object.assign(this, rect);
     this.setColor(color);
     this.figureCount = figureCount;
-    this.Figure = Figure;
+    this.FigureClass = FigureClass;
     this.onFigureClickedCallback = onFigureClicked;
     this.setLineWidth(2);
     this.setCascadeOpacityEnabled(true);
-    this.drawRect(cc.p(0, 0), cc.p(this.width, this.height));
-    this.figures = new cc.SpriteBatchNode(res.atlasTexture);
-    this.figures.setCascadeOpacityEnabled(true);
-    this.addChild(this.figures);
+    this.drawRect(cc.p(0, 0), cc.p(this.width, this.height)); // Draw border
+    this.container = new cc.SpriteBatchNode(res.atlasTexture); // Batch rendering
+    this.container.setCascadeOpacityEnabled(true);
+    this.addChild(this.container);
     this.fill();
     cc.eventManager.addListener({
       event: cc.EventListener.TOUCH_ONE_BY_ONE,
@@ -33,7 +33,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         if (!cc.rectContainsPoint(cc.rect(0, 0, this.width, this.height), pos))
           return false;
         let sqrRadius = Board.CLICK_RADIUS * Board.CLICK_RADIUS;
-        for (let figure of this.figures.getChildren())
+        for (let figure of this.container.getChildren())
           if (cc.pDistanceSQ(pos, figure.getPosition()) < sqrRadius)
             return this.onFigureClicked(figure) || true;
       }
@@ -41,18 +41,18 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   },
 
   /**
-   * Fill board with figures
+   * Fill board with figures. Always fill with figure count to prevent locking.
    */
   fill: function() {
-    let initial = [];
-    for (let figure of this.figures.getChildren())
-      initial.push(figure.getPosition());
-    for (let p of this.samplePoints(this.figureCount, initial)) {
-      let figure = new this.Figure();
+    let current = [];
+    for (let figure of this.container.getChildren())
+      current.push(figure.getPosition());
+    for (let p of this.samplePoints(this.figureCount, current)) {
+      let figure = new this.FigureClass();
       figure.setPosition(p);
       figure.setColor(Board.FIGURE_COLORS[
         Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
-      this.figures.addChild(figure);
+      this.container.addChild(figure);
     }
   },
 
@@ -103,34 +103,34 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
     do {
       grid = new Array(gridWidth * gridHeight);
       active = [];
-      set = initial.length > 0 ? [] : [cc.pAdd(sample(Math.random() * width,
+      set = initial.length > 0 ? [] : [cc.pAdd(insert(Math.random() * width,
                                                       Math.random() * height),
-                                               offset)];
+                                               offset)]; // First is random
       for (let p of initial)
-        sample(p.x - offset.x, p.y - offset.y);
+        insert(p.x - offset.x, p.y - offset.y); // Fill active list
       let aux;
-      while (set.length < number && (aux = next()))
+      while (set.length < number && (aux = next())) // Options can be exhausted
         set.push(cc.pAdd(aux, offset));
-    } while (set.length < number);
+    } while (set.length < number); // Try again if total was not achieved
     return set;
 
     function next () {
       while (active.length) {
         let i = Math.floor(Math.random() * active.length),
-            s = active[i]; // Pick a random active sample.
-        for (let j = 0; j < 50; ++j) { // Try k candidates before deactivation
+            s = active[i], // Pick a random active sample
+            k = 50; // Maximum number of candidates per sample
+        do {
           // Make a new random candidate between [radius, 2 * radius]
-          // from the chosen sample.
+          // from the chosen sample
           let r = Math.sqrt(Math.random() * rScale + sqrRadius),
               t = 2 * Math.PI * Math.random(),
               x = s.x + r * Math.cos(t),
               y = s.y + r * Math.sin(t);
           // Reject candidates that are outside the allowed extent,
-          // or closer than 2 * radius to any existing sample.
+          // or closer than radius to any existing sample
           if (0 <= x && x < width && 0 <= y && y < height && far(x, y))
-            return sample(x, y); // Remove sample from the active queue.
-        }
-         // Remove sample from the active queue.
+            return insert(x, y);
+        } while (--k); // Try k candidates before deactivation
         s = active.pop();
         if (i < active.length)
           active[i] = s;
@@ -159,7 +159,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
       return true;
     }
 
-    function sample (x, y) {
+    function insert (x, y) {
       let s = cc.p(x, y);
       active.push(s);
       grid[Math.floor(y / cellSize) * gridWidth +

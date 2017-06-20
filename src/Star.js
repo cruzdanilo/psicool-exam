@@ -22,9 +22,9 @@ var Star = cc.Sprite.extend(/** @lends Star# */{
   },
 
   /**
-   * Play destroy action and remove itself from the scene.
+   * Play destroy animation and remove itself from the scene.
    *
-   * @param {function} callback - Function to call after action
+   * @param {function} [callback] - Function to call after animation
    */
   destroy: function(callback) {
     this.runAction(cc.sequence(cc.scaleTo(Star.DEFAULT_ACTION_DURATION, 0)
