@@ -79,6 +79,7 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
     // `sfxCorrect.m4a` must be played.
     if (!this.clock.isRunning())
       this.clock.start();
+    this.score++;
     cc.audioEngine.playEffect(res.sfxCorrect);
   },
 
