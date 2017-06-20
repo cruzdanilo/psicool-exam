@@ -15,6 +15,9 @@ var Star = cc.Sprite.extend(/** @lends Star# */{
     this.setCascadeColorEnabled(true);
     this.setCascadeOpacityEnabled(true);
     this.setRotation(Math.random() * 360);
+    this.setScale(0);
+    this.runAction(cc.scaleTo(Star.DEFAULT_ACTION_DURATION, 1)
+                     .easing(cc.easeBackOut()));
     this.runAction(cc.rotateBy(Star.ROTATION_PERIOD, 360).repeatForever());
   },
 
@@ -24,10 +27,12 @@ var Star = cc.Sprite.extend(/** @lends Star# */{
    * @param {function} callback - Function to call after action
    */
   destroy: function(callback) {
-    this.runAction(cc.sequence(cc.scaleTo(0.3, 0).easing(cc.easeBackIn()),
-                               cc.callFunc(this.removeFromParent, this, true),
+    this.runAction(cc.sequence(cc.scaleTo(Star.DEFAULT_ACTION_DURATION, 0)
+                                 .easing(cc.easeBackIn()),
+                               cc.callFunc(this.removeFromParent, this),
                                cc.callFunc(callback)));
   }
 });
 
 Star.ROTATION_PERIOD = 3;
+Star.DEFAULT_ACTION_DURATION = 0.3;
