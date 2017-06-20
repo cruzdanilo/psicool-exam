@@ -190,7 +190,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   },
 });
 
-Board.MIN_DISTANCE_BETWEEN_FIGURES = 48; // Harder to get, but looks better
+Board.MIN_DISTANCE_BETWEEN_FIGURES = 44; // Looks better than 40
 Board.CLICK_RADIUS = 30;
 Board.FIGURE_COLORS = [cc.color(255, 255, 0),
                        cc.color(0, 255, 0),
