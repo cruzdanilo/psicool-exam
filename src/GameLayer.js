@@ -81,6 +81,7 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
       this.clock.start();
     this.score++;
     cc.audioEngine.playEffect(res.sfxCorrect);
+    star.destroy(() => this.board.fill());
   },
 
   onTimeUp: function () {

@@ -15,19 +15,16 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
     this._super();
     Object.assign(this, rect);
     this.setColor(color);
+    this.figureCount = figureCount;
+    this.Figure = Figure;
+    this.onFigureClickedCallback = onFigureClicked;
     this.setLineWidth(2);
     this.setCascadeOpacityEnabled(true);
     this.drawRect(cc.p(0, 0), cc.p(this.width, this.height));
     this.figures = new cc.SpriteBatchNode(res.atlasTexture);
     this.figures.setCascadeOpacityEnabled(true);
-    for (let p of this.samplePoints(figureCount)) {
-      let figure = new Figure();
-      figure.setPosition(p);
-      figure.setColor(Board.FIGURE_COLORS[
-        Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
-      this.figures.addChild(figure);
-    }
     this.addChild(this.figures);
+    this.fill();
     cc.eventManager.addListener({
       event: cc.EventListener.TOUCH_ONE_BY_ONE,
       swallowTouches: true,
@@ -36,13 +33,27 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         if (!cc.rectContainsPoint(cc.rect(0, 0, this.width, this.height), pos))
           return false;
         let sqrRadius = Board.CLICK_RADIUS * Board.CLICK_RADIUS;
-        for (let figure of this.figures.getChildren()) {
+        for (let figure of this.figures.getChildren())
           if (cc.pDistanceSQ(pos, figure.getPosition()) < sqrRadius)
             return this.onFigureClicked(figure) || true;
-        }
       }
     }, this);
-    this.onFigureClickedCallback = onFigureClicked;
+  },
+
+  /**
+   * Fill board with figures
+   */
+  fill: function() {
+    let initial = [];
+    for (let figure of this.figures.getChildren())
+      initial.push(figure.getPosition());
+    for (let p of this.samplePoints(this.figureCount, initial)) {
+      let figure = new this.Figure();
+      figure.setPosition(p);
+      figure.setColor(Board.FIGURE_COLORS[
+        Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
+      this.figures.addChild(figure);
+    }
   },
 
   /**
@@ -56,6 +67,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
       color.a *= this.getDisplayedOpacity() / 255;
       for (let e of this._node._buffer) // Set color of each vertex
         e.a.colors = e.b.colors = e.c.colors = color;
+      this._node._drawColor = color;
       this._node._dirty = true;
       for (let child of this._node.getChildren()) {
         if (this._node._cascadeColorEnabled)
@@ -71,10 +83,11 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * Generate samples using Robert Bridson's Poisson disc sampling algorithm:
    * http://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
    *
-   * @param {number} number Number of samples
+   * @param {number} number - Number of samples
+   * @param {cc.Point[]} initial - Initial set of samples
    * @return {cc.Point[]} Array containing samples
    */
-  samplePoints: function (number) {
+  samplePoints: function (total, initial) {
     let offset = cc.p(Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2),
                       Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2)),
         width = this.width - Board.MIN_DISTANCE_BETWEEN_FIGURES,
@@ -85,16 +98,20 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         cellSize = radius * Math.SQRT1_2,
         gridWidth = Math.ceil(width / cellSize),
         gridHeight = Math.ceil(height / cellSize),
+        number = total - initial.length,
         set, grid, active;
     do {
       grid = new Array(gridWidth * gridHeight);
       active = [];
-      set = [cc.pAdd(sample(Math.random() * width, Math.random() * height),
-                     offset)];
+      set = initial.length > 0 ? [] : [cc.pAdd(sample(Math.random() * width,
+                                                      Math.random() * height),
+                                               offset)];
+      for (let p of initial)
+        sample(p.x - offset.x, p.y - offset.y);
       let aux;
       while (set.length < number && (aux = next()))
         set.push(cc.pAdd(aux, offset));
-    } while (set.length < number); // Try again with new random first sample
+    } while (set.length < number);
     return set;
 
     function next () {
