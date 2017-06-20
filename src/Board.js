@@ -7,15 +7,15 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * @constructs
    * @param {cc.Rect} rect - Board bounding box
    * @param {cc.Color} color - Board color
-   * @param {number} figureCount - Number of figures
+   * @param {number} capacity - Maximum number of figures
    * @param {function} FigureClass - Figure class
    * @param {function} [onFigureClicked] - Figure clicked callback
    */
-  ctor: function (rect, color, figureCount, FigureClass, onFigureClicked) {
+  ctor: function (rect, color, capacity, FigureClass, onFigureClicked) {
     this._super();
     Object.assign(this, rect);
     this.setColor(color);
-    this.figureCount = figureCount;
+    this.capacity = capacity;
     this.FigureClass = FigureClass;
     this.onFigureClickedCallback = onFigureClicked;
     this.setLineWidth(2);
@@ -41,18 +41,22 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   },
 
   /**
-   * Fill board with figures. Always fill with figure count to prevent locking.
+   * Fill board with figures.
+   *
+   * @param {number} [limit]
    */
-  fill: function() {
+  fill: function(limit) {
     let current = [];
     for (let figure of this.container.getChildren())
       current.push(figure.getPosition());
-    for (let p of this.samplePoints(this.figureCount, current)) {
+    for (let p of this.samplePoints(current)) {
       let figure = new this.FigureClass();
       figure.setPosition(p);
       figure.setColor(Board.FIGURE_COLORS[
         Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
       this.container.addChild(figure);
+      if (limit && --limit < 1)
+        break;
     }
   },
 
@@ -82,12 +86,12 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   /**
    * Generate samples using Robert Bridson's Poisson disc sampling algorithm:
    * http://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
+   * Always fill to capacity, preventing future board lock.
    *
-   * @param {number} number - Number of samples
    * @param {cc.Point[]} initial - Initial set of samples
    * @return {cc.Point[]} Array containing samples
    */
-  samplePoints: function (total, initial) {
+  samplePoints: function (initial) {
     let offset = cc.p(Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2),
                       Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2)),
         width = this.width - Board.MIN_DISTANCE_BETWEEN_FIGURES,
@@ -98,7 +102,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         cellSize = radius * Math.SQRT1_2,
         gridWidth = Math.ceil(width / cellSize),
         gridHeight = Math.ceil(height / cellSize),
-        number = total - initial.length,
+        n = this.capacity - initial.length,
         set, grid, active;
     do {
       grid = new Array(gridWidth * gridHeight);
@@ -109,9 +113,9 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
       for (let p of initial)
         insert(p.x - offset.x, p.y - offset.y); // Fill active list
       let aux;
-      while (set.length < number && (aux = next())) // Options can be exhausted
+      while (set.length < n && (aux = next())) // Options can be exhausted
         set.push(cc.pAdd(aux, offset));
-    } while (set.length < number); // Try again if total was not achieved
+    } while (set.length < n); // Try again if total was not achieved
     return set;
 
     function next () {
