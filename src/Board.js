@@ -15,16 +15,19 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
     this._super();
     Object.assign(this, rect);
     this.setColor(color);
+    this.setLineWidth(2);
     this.setCascadeOpacityEnabled(true);
-    this.drawRect(cc.p(0, 0), cc.p(this.width, this.height),
-                  cc.color(0, 0, 0, 0), 2, this.color);
+    this.drawRect(cc.p(0, 0), cc.p(this.width, this.height));
+    this.figures = new cc.SpriteBatchNode(res.atlasTexture);
+    this.figures.setCascadeOpacityEnabled(true);
     for (let p of this.samplePoints(figureCount)) {
       let figure = new Figure();
       figure.setPosition(p);
       figure.setColor(Board.FIGURE_COLORS[
         Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
-      this.addChild(figure);
+      this.figures.addChild(figure);
     }
+    this.addChild(this.figures);
     cc.eventManager.addListener({
       event: cc.EventListener.TOUCH_ONE_BY_ONE,
       swallowTouches: true,
@@ -33,13 +36,35 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         if (!cc.rectContainsPoint(cc.rect(0, 0, this.width, this.height), pos))
           return false;
         let sqrRadius = Board.CLICK_RADIUS * Board.CLICK_RADIUS;
-        for (let figure of this.getChildren()) {
+        for (let figure of this.figures.getChildren()) {
           if (cc.pDistanceSQ(pos, figure.getPosition()) < sqrRadius)
             return this.onFigureClicked(figure) || true;
         }
       }
     }, this);
     this.onFigureClickedCallback = onFigureClicked;
+  },
+
+  /**
+   * Fix DrawNode constant color and opacity.
+   * @override
+   */
+  _createRenderCmd: function () {
+    let renderCmd = cc.DrawNode.prototype._createRenderCmd.call(this);
+    renderCmd._updateColor = function () {
+      let color = this.getDisplayedColor();
+      color.a *= this.getDisplayedOpacity() / 255;
+      for (let e of this._node._buffer) // Set color of each vertex
+        e.a.colors = e.b.colors = e.c.colors = color;
+      this._node._dirty = true;
+      for (let child of this._node.getChildren()) {
+        if (this._node._cascadeColorEnabled)
+          child._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.colorDirty);
+        if (this._node._cascadeOpacityEnabled)
+          child._renderCmd.setDirtyFlag(cc.Node._dirtyFlags.opacityDirty);
+      }
+    };
+    return renderCmd;
   },
 
   /**
