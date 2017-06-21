@@ -85,6 +85,7 @@ var GameLayer = cc.Layer.extend(/** @lends GameLayer# */{
   },
 
   onTimeUp: function () {
+    this.board.finish();
     // This method sends the score to the server when running in production and
     // shows the score screen.
     this.scene.finishGame({

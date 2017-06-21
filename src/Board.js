@@ -192,6 +192,13 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
     if (this.onFigureClickedCallback)
       this.onFigureClickedCallback(figure);
   },
+
+  /**
+   * Stop handling events
+   */
+  finish: function () {
+    cc.eventManager.removeListeners(this);
+  }
 });
 
 Board.MIN_DISTANCE_BETWEEN_FIGURES = 44; // Looks better than 40
