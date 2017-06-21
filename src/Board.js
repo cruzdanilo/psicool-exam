@@ -21,7 +21,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
     this.setLineWidth(2);
     this.setCascadeOpacityEnabled(true);
     this.drawRect(cc.p(0, 0), cc.p(this.width, this.height)); // Draw border
-    this.container = new cc.SpriteBatchNode(res.atlasTexture); // Batch rendering
+    this.container = new cc.SpriteBatchNode(res.atlasTexture); // Batching
     this.container.setCascadeOpacityEnabled(true);
     this.addChild(this.container);
     this.fill();
@@ -33,7 +33,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         if (!cc.rectContainsPoint(cc.rect(0, 0, this.width, this.height), pos))
           return false;
         let sqrRadius = Board.CLICK_RADIUS * Board.CLICK_RADIUS;
-        for (let figure of this.container.getChildren())
+        for (let figure of this.getEnabledFigures())
           if (cc.pDistanceSQ(pos, figure.getPosition()) < sqrRadius)
             return this.onFigureClicked(figure) || true;
       }
@@ -41,21 +41,27 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   },
 
   /**
+   * @return {Array} Array of enabled figures
+   */
+  getEnabledFigures: function () {
+    return this.container.getChildren().filter(f => f.enabled);
+  },
+
+  /**
    * Fill board with figures.
    *
    * @param {number} [limit]
    */
-  fill: function(limit) {
-    let current = [];
-    for (let figure of this.container.getChildren())
-      current.push(figure.getPosition());
-    for (let p of this.samplePoints(current)) {
+  fill: function (limit) {
+    limit = limit || this.capacity - this.getEnabledFigures().length;
+    for (let p of this.samplePoints()) {
       let figure = new this.FigureClass();
+      figure.enabled = true;
       figure.setPosition(p);
       figure.setColor(Board.FIGURE_COLORS[
         Math.floor(Math.random() * Board.FIGURE_COLORS.length)]);
       this.container.addChild(figure);
-      if (limit && --limit < 1)
+      if (--limit < 1)
         break;
     }
   },
@@ -86,12 +92,11 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
   /**
    * Generate samples using Robert Bridson's Poisson disc sampling algorithm:
    * http://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
-   * Always fill to capacity, preventing future board lock.
+   * Prevent future board lock by always filling to capacity + safety threshold.
    *
-   * @param {cc.Point[]} initial - Initial set of samples
-   * @return {cc.Point[]} Array containing samples
+   * @return {cc.Point[]} Array containing new samples
    */
-  samplePoints: function (initial) {
+  samplePoints: function () {
     let offset = cc.p(Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2),
                       Math.floor(Board.MIN_DISTANCE_BETWEEN_FIGURES / 2)),
         width = this.width - Board.MIN_DISTANCE_BETWEEN_FIGURES,
@@ -102,20 +107,23 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
         cellSize = radius * Math.SQRT1_2,
         gridWidth = Math.ceil(width / cellSize),
         gridHeight = Math.ceil(height / cellSize),
-        n = this.capacity - initial.length,
+        n = this.capacity - this.container.getChildrenCount() +
+            Board.SPARE_SAMPLES, // Guarantees free space
         set, grid, active;
     do {
       grid = new Array(gridWidth * gridHeight);
       active = [];
-      set = initial.length > 0 ? [] : [cc.pAdd(insert(Math.random() * width,
-                                                      Math.random() * height),
-                                               offset)]; // First is random
-      for (let p of initial)
-        insert(p.x - offset.x, p.y - offset.y); // Fill active list
+      set = [];
+      // Add all current figures, including disabled ones.
+      for (let p of this.container.getChildren())
+        insert(p.x - offset.x, p.y - offset.y);
+      if (active.length < 1) // First sample is random
+        set.push(cc.pAdd(insert(Math.random() * width,
+                                Math.random() * height), offset));
       let aux;
-      while (set.length < n && (aux = next())) // Options can be exhausted
+      while (set.length < n && (aux = next())) // Options may be exhausted
         set.push(cc.pAdd(aux, offset));
-    } while (set.length < n); // Try again if total was not achieved
+    } while (set.length < n); // Try again if n was not achieved
     return set;
 
     function next () {
@@ -180,11 +188,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
    * @param {Figure} figure
    */
   onFigureClicked: function (figure) {
-    figure.retain();
-    figure.removeFromParent(false); // Prevent multiple clicks
-    figure.setPosition(this.convertToWorldSpace(figure.getPosition()));
-    this.getParent().addChild(figure);
-    figure.release();
+    figure.enabled = false;
     if (this.onFigureClickedCallback)
       this.onFigureClickedCallback(figure);
   },
@@ -192,6 +196,7 @@ var Board = cc.DrawNode.extend(/** @lends Board# */{
 
 Board.MIN_DISTANCE_BETWEEN_FIGURES = 44; // Looks better than 40
 Board.CLICK_RADIUS = 30;
+Board.SPARE_SAMPLES = 3;
 Board.FIGURE_COLORS = [cc.color(255, 255, 0),
                        cc.color(0, 255, 0),
                        cc.color(0, 0, 255),

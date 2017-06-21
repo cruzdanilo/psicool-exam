@@ -26,11 +26,11 @@ var Star = cc.Sprite.extend(/** @lends Star# */{
    *
    * @param {function} [callback] - Function to call after animation
    */
-  destroy: function(callback) {
+  destroy: function (callback) {
     this.runAction(cc.sequence(
       new cc.EaseBackIn(cc.scaleTo(Star.DEFAULT_ACTION_DURATION, 0)),
-      cc.callFunc(this.removeFromParent, this),
-      cc.callFunc(callback)));
+      cc.callFunc(callback),
+      cc.callFunc(this.removeFromParent, this)));
   }
 });
 
